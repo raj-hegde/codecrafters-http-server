@@ -45,6 +45,10 @@ func handleConn(conn net.Conn) {
 		message := strings.Replace(split_req[1], "/echo/", "", 1)
 		res := response(message)
 		conn.Write([]byte(res))
+	} else if split_req[1] == "/user-agent" {
+		message := strings.Split(split_req[len(split_req)-2], "\r\n")
+		res := response(message[0])
+		conn.Write([]byte(res))
 	} else {
 		conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
 
