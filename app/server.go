@@ -41,8 +41,20 @@ func handleConn(conn net.Conn) {
 	split_req := strings.Split(req, " ")
 	if split_req[1] == "/" {
 		conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
+	} else if strings.HasPrefix(split_req[1], "/echo") {
+		message := strings.Replace(split_req[1], "/echo/", "", 1)
+		res := response(message)
+		conn.Write([]byte(res))
 	} else {
 		conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
 
 	}
+}
+
+func response(message string) string {
+	statusLine := "HTTP/1.1 200 OK\r\n"
+	contentType := "Content-Type: text/plain\r\n"
+	contentLength := fmt.Sprintf("content-Length: %d\r\n\r\n", len(message))
+
+	return statusLine + contentType + contentLength + message
 }
