@@ -41,24 +41,29 @@ func handleConn(conn net.Conn) {
 		}
 		req := string(buf[:n])
 		split_req := strings.Split(req, " ")
-		if split_req[1] == "/" {
+		switch {
+		case split_req[1] == "/":
 			conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
-		} else if strings.HasPrefix(split_req[1], "/echo") {
+		case strings.HasPrefix(split_req[1], "/echo"):
 			message := strings.Replace(split_req[1], "/echo/", "", 1)
 			res := response(message)
 			conn.Write([]byte(res))
-		} else if split_req[1] == "/user-agent" {
+		case split_req[1] == "/user-agent":
 			message := strings.Split(split_req[len(split_req)-2], "\r\n")
 			res := response(message[0])
 			conn.Write([]byte(res))
-		} else if strings.HasPrefix(split_req[1], "/files") {
-			content, err := os.ReadFile(split_req[1])
+		case strings.HasPrefix(split_req[1], "/files"):
+			args := os.Args
+			directory := args[2]
+			filename := strings.Replace(split_req[1], "/files/", "", 1)
+			content, err := os.ReadFile(directory + "/" + filename)
 			if err != nil {
 				conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
+				os.Exit(1)
 			}
 			res := response1(string(content))
 			conn.Write([]byte(res))
-		} else {
+		default:
 			conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
 
 		}
