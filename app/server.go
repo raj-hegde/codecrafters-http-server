@@ -51,6 +51,13 @@ func handleConn(conn net.Conn) {
 			message := strings.Split(split_req[len(split_req)-2], "\r\n")
 			res := response(message[0])
 			conn.Write([]byte(res))
+		} else if strings.HasPrefix(split_req[1], "/files") {
+			content, err := os.ReadFile(split_req[1])
+			if err != nil {
+				conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
+			}
+			res := response1(string(content))
+			conn.Write([]byte(res))
 		} else {
 			conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
 
@@ -60,6 +67,14 @@ func handleConn(conn net.Conn) {
 func response(message string) string {
 	statusLine := "HTTP/1.1 200 OK\r\n"
 	contentType := "Content-Type: text/plain\r\n"
+	contentLength := fmt.Sprintf("content-Length: %d\r\n\r\n", len(message))
+
+	return statusLine + contentType + contentLength + message
+}
+
+func response1(message string) string {
+	statusLine := "HTTP/1.1 200 OK\r\n"
+	contentType := "Content-Type: application/octet-stream\r\n"
 	contentLength := fmt.Sprintf("content-Length: %d\r\n\r\n", len(message))
 
 	return statusLine + contentType + contentLength + message
