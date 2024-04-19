@@ -56,13 +56,27 @@ func handleConn(conn net.Conn) {
 			args := os.Args
 			directory := args[2]
 			filename := strings.Replace(split_req[1], "/files/", "", 1)
-			content, err := os.ReadFile(directory + "/" + filename)
-			if err != nil {
-				conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
-				os.Exit(1)
+			if split_req[0] == "GET" {
+				content, err := os.ReadFile(directory + "/" + filename)
+				if err != nil {
+					conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
+					os.Exit(1)
+				}
+				res := response1(string(content))
+				conn.Write([]byte(res))
 			}
-			res := response1(string(content))
-			conn.Write([]byte(res))
+			if split_req[0] == "POST" {
+				path := directory + "/" + filename
+				split := strings.Split(req, "\r\n")
+				content := split[len(split)-1]
+				err := os.WriteFile(path, []byte(content), 0666)
+				if err != nil {
+					fmt.Println("error writing to file", err.Error())
+					os.Exit(1)
+				}
+				res := response2(content)
+				conn.Write([]byte(res))
+			}
 		default:
 			conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
 
@@ -79,6 +93,14 @@ func response(message string) string {
 
 func response1(message string) string {
 	statusLine := "HTTP/1.1 200 OK\r\n"
+	contentType := "Content-Type: application/octet-stream\r\n"
+	contentLength := fmt.Sprintf("content-Length: %d\r\n\r\n", len(message))
+
+	return statusLine + contentType + contentLength + message
+}
+
+func response2(message string) string {
+	statusLine := "HTTP/1.1 201 OK\r\n"
 	contentType := "Content-Type: application/octet-stream\r\n"
 	contentLength := fmt.Sprintf("content-Length: %d\r\n\r\n", len(message))
 
